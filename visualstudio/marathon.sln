@@ -1,0 +1,39 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.31313.79
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{F7921804-1D93-48E6-93C0-F0DD0E381452}"
+	ProjectSection(SolutionItems) = preProject
+		..\memo.txt = ..\memo.txt
+	EndProjectSection
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "marathon_main", "marathon_main\marathon_main.vcxproj", "{7BBDCEEE-A1DE-C52F-C4A6-EFA4AF2AE6DE}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Win32 = Debug|Win32
+		Debug|x64 = Debug|x64
+		Release|Win32 = Release|Win32
+		Release|x64 = Release|x64
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{7BBDCEEE-A1DE-C52F-C4A6-EFA4AF2AE6DE}.Debug|Win32.ActiveCfg = Debug|Win32
+		{7BBDCEEE-A1DE-C52F-C4A6-EFA4AF2AE6DE}.Debug|Win32.Build.0 = Debug|Win32
+		{7BBDCEEE-A1DE-C52F-C4A6-EFA4AF2AE6DE}.Debug|x64.ActiveCfg = Debug|x64
+		{7BBDCEEE-A1DE-C52F-C4A6-EFA4AF2AE6DE}.Debug|x64.Build.0 = Debug|x64
+		{7BBDCEEE-A1DE-C52F-C4A6-EFA4AF2AE6DE}.Release|Win32.ActiveCfg = Release|Win32
+		{7BBDCEEE-A1DE-C52F-C4A6-EFA4AF2AE6DE}.Release|Win32.Build.0 = Release|Win32
+		{7BBDCEEE-A1DE-C52F-C4A6-EFA4AF2AE6DE}.Release|x64.ActiveCfg = Release|x64
+		{7BBDCEEE-A1DE-C52F-C4A6-EFA4AF2AE6DE}.Release|x64.Build.0 = Release|x64
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {AD7FF542-B28F-4E5C-9877-8B889DE25CEE}
+	EndGlobalSection
+	GlobalSection(TestCaseManagementSettings) = postSolution
+		CategoryFile = marathon.vsmdi
+	EndGlobalSection
+EndGlobal
