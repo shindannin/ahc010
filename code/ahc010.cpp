@@ -281,18 +281,95 @@ const static int TO[8][4] = {
 };
 const pair<int, int> DIJ[4] = { {0, -1}, {-1, 0}, {0, 1}, {1, 0} };
 
-int getFullScore(vector <vector <int> > tiles, const vector <int>& state) {
+vector < tuple <int, int, int> > getFullScoreRoute(const vector <vector <int> >& tiles, int sy = N / 2, int sx = N / 2) {
 
-	for (int i=0;i<N;i++) {
-		for (int j=0;j<N;j++) {
-			for (int r=0;r<state[i * N + j]; r++)
-			{
-				tiles[i][j] = ROTATE[tiles[i][j]];
+	vector <tuple <int, int, int> > tmp;
+	bool used[N][N][4] = {};
+	int y = sy;
+	int x = sx;
+
+	{
+		int i = y;
+		int j = x;
+		int d = 0;
+		if (TO[tiles[i][j]][d] != -1 && !used[i][j][d]) {
+			// (si, sj) のタイルに sd 方向のタイルから侵入した状態からスタートして環状線の長さを求める
+			int i2 = i;
+			int j2 = j;
+			int d2 = d;
+			int length = 0;
+			while (!used[i2][j2][d2]) {
+				if (TO[tiles[i2][j2]][d2] == -1) {
+					break;
+				}
+				length += 1;
+				used[i2][j2][d2] = true;
+				tmp.emplace_back(make_tuple(i2, j2, d2));
+
+				d2 = TO[tiles[i2][j2]][d2]; // 次のタイルの方向
+				used[i2][j2][d2] = true;
+				tmp.emplace_back(make_tuple(i2, j2, d2));
+
+				i2 += DIJ[d2].first;
+				j2 += DIJ[d2].second;
+				if (i2 >= N || j2 >= N || i2 < 0 || j2 < 0) { // 線路が途切れている
+					break;
+				}
+				d2 = (d2 + 2) % 4;
 			}
+
+			y = i2;
+			x = j2;
 		}
 	}
 
-	vector <pair <int , vector <tuple <int, int, int> >> > ls;
+	return tmp;
+}
+
+pair <int, pair <int, int> > getFullScoreYX(const vector <vector <int> >& tiles, int sy = N / 2, int sx = N/2) {
+	bool used[N][N][4] = {};
+	int y = sy;
+	int x = sx;
+	int score = 0;
+
+	{
+		int i = y;
+		int j = x;
+		int d = 0;
+		if (TO[tiles[i][j]][d] != -1 && !used[i][j][d]) {
+			// (si, sj) のタイルに sd 方向のタイルから侵入した状態からスタートして環状線の長さを求める
+			int i2 = i;
+			int j2 = j;
+			int d2 = d;
+			int length = 0;
+			while (!used[i2][j2][d2]) {
+				if (TO[tiles[i2][j2]][d2] == -1) {
+					break;
+				}
+				length += 1;
+				used[i2][j2][d2] = true;
+				d2 = TO[tiles[i2][j2]][d2]; // 次のタイルの方向
+				used[i2][j2][d2] = true;
+				i2 += DIJ[d2].first;
+				j2 += DIJ[d2].second;
+				if (i2 >= N || j2 >= N || i2 < 0 || j2 < 0) { // 線路が途切れている
+					break;
+				}
+				d2 = (d2 + 2) % 4;
+			}
+
+			y = i2;
+			x = j2;
+			score = length;
+		}
+	}
+
+	return make_pair(score, make_pair(y, x));
+}
+
+int getTwoCycleFullScore(const vector <vector <int> >& tiles, int sy = N / 2, int sx = N / 2) {
+
+	vector <pair <int, vector <tuple <int, int, int> >> > ls;
 	bool used[N][N][4] = {};
 
 	auto cycle = make_vector(N, N, 4, make_pair(0, 0));
@@ -323,14 +400,14 @@ int getFullScore(vector <vector <int> > tiles, const vector <int>& state) {
 						}
 						d2 = (d2 + 2) % 4;
 					}
-					if (i==i2 && j==j2 && d==d2) {
+					if (i == i2 && j == j2 && d == d2) {
 						ls.push_back(make_pair(length, tmp));
 
 						for (const auto& tpl : tmp) {
 							int tmpi;
 							int tmpj;
 							int tmpd;
-							tie (tmpi, tmpj, tmpd) = tpl;
+							tie(tmpi, tmpj, tmpd) = tpl;
 							cycle[tmpi][tmpj][tmpd].first = length;
 						}
 					}
@@ -344,11 +421,73 @@ int getFullScore(vector <vector <int> > tiles, const vector <int>& state) {
 	if (ls.size() <= 1) {
 		score = 0;
 	}
-	else 
+	else
 	{
 		sort(ALL(ls));
-		score = ls[ls.size() - 1].first; //  *ls[ls.size() - 2].first;
-//		score = ls[ls.size()-1].first * ls[ls.size() - 2].first;
+		score = ls[ls.size() - 1].first *ls[ls.size() - 2].first;
+	};
+
+	return score;
+}
+
+int getOneCycleFullScore(const vector <vector <int> >& tiles, int sy = N / 2, int sx = N / 2) {
+
+	vector <pair <int, vector <tuple <int, int, int> >> > ls;
+	bool used[N][N][4] = {};
+
+	auto cycle = make_vector(N, N, 4, make_pair(0, 0));
+
+	for (int i = 0; i < N; i++) {
+		for (int j = 0; j < N; j++) {
+			for (int d = 0; d < NUM_DIR; d++) {
+				if (TO[tiles[i][j]][d] != -1 && !used[i][j][d]) {
+					int i2 = i;
+					int j2 = j;
+					int d2 = d;
+					int length = 0;
+					vector <tuple <int, int, int> > tmp;
+					while (!used[i2][j2][d2]) {
+						if (TO[tiles[i2][j2]][d2] == -1) {
+							break;
+						}
+						length += 1;
+						used[i2][j2][d2] = true;
+						tmp.emplace_back(make_tuple(i2, j2, d2));
+						d2 = TO[tiles[i2][j2]][d2];
+						used[i2][j2][d2] = true;
+						tmp.emplace_back(make_tuple(i2, j2, d2));
+						i2 += DIJ[d2].first;
+						j2 += DIJ[d2].second;
+						if (i2 >= N || j2 >= N || i2 < 0 || j2 < 0) {
+							break;
+						}
+						d2 = (d2 + 2) % 4;
+					}
+					if (i == i2 && j == j2 && d == d2) {
+						ls.push_back(make_pair(length, tmp));
+
+						for (const auto& tpl : tmp) {
+							int tmpi;
+							int tmpj;
+							int tmpd;
+							tie(tmpi, tmpj, tmpd) = tpl;
+							cycle[tmpi][tmpj][tmpd].first = length;
+						}
+					}
+				}
+			}
+		}
+	}
+
+	int score = 0;
+
+	if (ls.size() <= 0) {
+		score = 0;
+	}
+	else
+	{
+		sort(ALL(ls));
+		score = ls[ls.size() - 1].first;
 	};
 
 	return score;
@@ -380,83 +519,203 @@ void realMain(int caseID)
 		tiles.emplace_back(vi);
 	}
 
+	vector <vector <int> > firstTiles(tiles);
 
-	auto startClock = getTime();
 
-	vector <int> state(S);
-	vector <int> bestState = state;
-	int score = getFullScore(tiles, state);
-	int bestScore = INT_MIN;                // 最高スコア
+	vector <vector <int> > realBestTiles(tiles);
+	int realBestScore = NG;
+
+
+	const int NUM_MUL = 3;
+	int sy = N / 2 + 1;
+	int sx = N / 2 + 1;
+	for (int multi=0;multi< NUM_MUL;multi++)
 	{
+		auto startClock = getTime();
+		sx++;
 
-		const static double START_TEMP = 10; // 開始時の温度
-		const static double END_TEMP = 1; // 終了時の温度
-		const static double END_TIME = 10.8; // 終了時間（秒）
-
-		double temp = START_TEMP;   // 現在の温度
-
-		long long steps;    // 試行回数
-		for (steps = 0; ; steps++)
+		// 最高スコア
 		{
-			if (steps % 100 == 0)
+			vector < vector <int> > state = tiles;
+			vector < vector <int> > bestState = tiles;
+
+			auto scyx = getFullScoreYX(state);
+			auto score = scyx.first;
+			auto lastYX = scyx.second;
+			int bestScore = INT_MIN;
+
+			const static double START_TEMP = 0.5; // 開始時の温度
+			const static double END_TEMP = 0.5; // 終了時の温度
+			const static double END_TIME = 1.5 / NUM_MUL; // 終了時間（秒）
+
+
+			double temp = START_TEMP;   // 現在の温度
+
+			long long steps;    // 試行回数
+			for (steps = 0; ; steps++)
 			{
-				const double time = getTime() - startClock;   // 経過時間（秒）
-				if (time >= END_TIME)
+				if (steps % 100 == 0)
 				{
-					break;
+					const double time = getTime() - startClock;   // 経過時間（秒）
+					if (time >= END_TIME)
+					{
+						break;
+					}
+
+					const double progressRatio = time / END_TIME;   // 進捗。開始時が0.0、終了時が1.0
+					temp = START_TEMP + (END_TEMP - START_TEMP) * progressRatio;
 				}
 
-				const double progressRatio = time / END_TIME;   // 進捗。開始時が0.0、終了時が1.0
-				temp = START_TEMP + (END_TEMP - START_TEMP) * progressRatio;
-			}
-
-			{
-				// 近傍1 : ランダムな点を1つ回転
-				const int y = randXor.nextInt(N);
-				const int x = randXor.nextInt(N);
-				int& curD = state[y * N + x];
-				const int bakD = curD;
-				const int d = randXor.nextInt(2) * 2 - 1;
-
-				int deltaScore = 0;
-
-				// 変更前のd日目のコンテストのスコアを引き、変更して、変更後のコンテストのスコアtを足す。
-				deltaScore -= score;
-				curD = (curD + d + 4) % 4;
-				deltaScore += getFullScore(tiles, state);
-				const double probability = exp(deltaScore / temp); // 焼きなまし法の遷移確率
-
-				if (probability > randXor.nextDouble())
 				{
-					// 変更を受け入れる。スコアを更新
-					score += deltaScore;
-					if (score > bestScore)
+					// 近傍1 : ランダムな点を1つ回転
+	//				const int y = CLAMP(lastYX.first  + randXor.nextDelta(1),0, N-1);
+	//				const int x = CLAMP(lastYX.second + randXor.nextDelta(1),0, N-1);
+					const int y = randXor.nextInt(N);
+					const int x = randXor.nextInt(N);
+					int& curD = state[y][x];
+					const int bakD = curD;
+
+					int deltaScore = 0;
+
+					// 変更前のd日目のコンテストのスコアを引き、変更して、変更後のコンテストのスコアtを足す。
+					deltaScore -= score;
+
+
+					curD = ROTATE[curD];
+					auto nextScYX = getFullScoreYX(state, sy, sx);
+					deltaScore += nextScYX.first;
+					const double probability = exp(deltaScore / temp); // 焼きなまし法の遷移確率
+
+
+					if (steps % 10000 == 0)
 					{
-						bestScore = score;
-						bestState = state;
+						//					cerr << " y=" << y << " x=" << x << endl;
+
+						//					cerr << " deltaScore=" << deltaScore << " probability=" << probability << endl;
+					}
+
+					if (probability > randXor.nextDouble())
+					{
+						// 変更を受け入れる。スコアを更新
+						score += deltaScore;
+						lastYX = nextScYX.second;
+
+						if (score > bestScore)
+						{
+							bestScore = score;
+							bestState = state;
+							//						cerr << " bestScore=" << bestScore << endl;
+
+						}
+
+					}
+					else
+					{
+						// 変更を受け入れないので、元に戻す
+						curD = bakD;
 					}
 				}
-				else
+			}
+
+			// 出力
+			tiles = bestState;
+
+			auto route = getFullScoreRoute(tiles, sy, sx);
+
+			// ここから１番長いのを作成
+			{
+				int bestOneCycleScore = NG;
+				auto bestTilesOneCycleScore = tiles;
+
+				for (const auto& tpl : route)
 				{
-					// 変更を受け入れないので、元に戻す
-					curD = bakD;
+					int tmpi;
+					int tmpj;
+					int tmpd;
+					tie(tmpi, tmpj, tmpd) = tpl;
+
+					if (tiles[tmpi][tmpj] == 4 || tiles[tmpi][tmpj] == 5)
+					{
+						auto tmpTiles = tiles;
+
+						tmpTiles[tmpi][tmpj] = ROTATE[tmpTiles[tmpi][tmpj]];
+
+
+						const int sc = getOneCycleFullScore(tmpTiles, sy, sx);
+
+						if (sc > bestOneCycleScore)
+						{
+							bestOneCycleScore = sc;
+							bestTilesOneCycleScore = tmpTiles;
+						}
+					}
 				}
+
+				tiles = bestTilesOneCycleScore;
+			}
+
+			// ここから最高得点になるように作成
+			{
+				int bestTwoCycleScore = NG;
+				auto bestTilesTwoCycleScore = tiles;
+
+				for (const auto& tpl : route)
+				{
+					int tmpi;
+					int tmpj;
+					int tmpd;
+					tie(tmpi, tmpj, tmpd) = tpl;
+
+					if (tiles[tmpi][tmpj] == 4 || tiles[tmpi][tmpj] == 5)
+					{
+						auto tmpTiles = tiles;
+
+						tmpTiles[tmpi][tmpj] = ROTATE[tmpTiles[tmpi][tmpj]];
+
+
+						const int sc = getTwoCycleFullScore(tmpTiles, sy, sx);
+
+						if (sc > bestTwoCycleScore)
+						{
+							bestTwoCycleScore = sc;
+							bestTilesTwoCycleScore = tmpTiles;
+
+						}
+					}
+				}
+
+				tiles = bestTilesTwoCycleScore;
+
+				cerr << " bestTwoCycleScore=" << bestTwoCycleScore << endl;
+
+				if (bestTwoCycleScore > realBestScore)
+				{
+					realBestScore = bestTwoCycleScore;
+					realBestTiles = tiles;
+				}
+
 			}
 		}
-
-		// 出力
-		for (int t : bestState)
-		{
-			cout << t + 1 << endl;
-		}
-		cerr << "steps: " << steps << endl;
-		cerr << "bestScore: " << max(0, bestScore) << endl;
 	}
 
+
+	sScores[caseID] = realBestScore;
 	string ans;
-	for (int i = 0; i < SZ(bestState); ++i)
+	for (int y = 0; y < N; ++y)
 	{
-		ans += string(1, '0' + bestState[i]);
+		for (int x = 0; x < N; ++x)
+		{
+			int tile = firstTiles[y][x];
+			for (int rn = 0; rn < NUM_DIR; rn++)
+			{
+				if (tile == realBestTiles[y][x])
+				{
+					ans += string(1, '0' + rn);
+					break;
+				}
+				tile = ROTATE[tile];
+			}
+		}
 	}
 
 	OUTPUT(ans);
@@ -467,6 +726,7 @@ vector <double> gCoefs;
 
 int main(int argc, char* argv[])
 {
+	sScores.resize(1);
 	if (argc > 1)
 	{
 		gCoefs.clear();
@@ -483,7 +743,7 @@ int main(int argc, char* argv[])
 #else // SUBMISSION
 
 	const int NUM_THREADS = 1;
-	const int NUM_REPEATS = 1;
+	const int NUM_REPEATS = 10;
 	const int ALL_TEST = NUM_THREADS * NUM_REPEATS;
 	sScores.resize(ALL_TEST);
 
@@ -520,4 +780,5 @@ int main(int argc, char* argv[])
 
 	return 0;
 }
-	
+
+
